@@ -1,0 +1,6 @@
+node_modules/
+.env
+ml/model_cache/*
+!ml/model_cache/.gitkeep
+# eval_results.json is runtime-generated — do not commit
+data/eval_results.json
