@@ -19,6 +19,8 @@ const TIMESPAN_MAP = {
 
 const NON_ENGLISH_DOMAINS = ['xinhua', 'chinadaily', 'tass', 'rt.com', 'sputnik', 'globaltimes'];
 
+const BLOCKLIST = ['insurance', 'recipe', 'patio', 'fashion', 'olympic', 'celebrity', 'movie', 'restaurant', 'hotel', 'shopping', 'discount', 'sale', 'deal', 'arrested', 'nfl', 'nba', 'soccer', 'football', 'baseball', 'drug takeback', 'prescription drug'];
+
 const FALLBACKS = {
   renewable: [
     { title: 'Global solar capacity hits record 1.5 terawatts in 2024', source: 'Reuters', url: '#', date: null, snippet: 'Solar installations surged globally as costs fell to historic lows across Asia and Europe.' },
@@ -94,7 +96,7 @@ async function fetchGdelt(query, timespan) {
         from:     'gdelt',
         language: a.language || '',
       }))
-      .filter(a => a.title && isEnglish(a));
+      .filter(a => a.title && !BLOCKLIST.some(w => a.title.toLowerCase().includes(w)) && isEnglish(a));
     console.log(`[GDELT] ${filtered.length}/${raw.length} English articles`);
     return filtered;
   } catch (e) {
@@ -117,6 +119,7 @@ async function getArticles(theme, region, timeWindow) {
   // Retry 1: drop region
   if (articles.length === 0 && regionStr) {
     console.log('[GDELT] retry without region');
+    await new Promise(r => setTimeout(r, 2000));
     articles = await fetchGdelt(`(${keywords})`, timespan);
   }
 
@@ -124,6 +127,7 @@ async function getArticles(theme, region, timeWindow) {
   if (articles.length === 0) {
     const firstWord = keywords.replace(/["()]/g, '').split(/\s+/)[0];
     console.log(`[GDELT] retry with "${firstWord}" 90d`);
+    await new Promise(r => setTimeout(r, 2000));
     articles = await fetchGdelt(firstWord, '90d');
   }
 

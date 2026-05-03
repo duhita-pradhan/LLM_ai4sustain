@@ -5,10 +5,19 @@ const path      = require('path');
 const fs        = require('fs');
 const OpenAI    = require('openai');
 
-const { getArticles }    = require('./gdelt');
-const { classifyKeyword } = require('./classifier');
-const { gEval }          = require('./geval');
-const { runOnce }        = require('./eval_runner');
+const { getArticles }         = require('./gdelt');
+const { classifyKeyword }     = require('./classifier');
+const { classifyWithDeBERTa } = require('./deberta');
+const { gEval }               = require('./geval');
+const { runOnce }             = require('./eval_runner');
+
+const MUST_HAVE_KEYWORDS = {
+  renewable:    ['solar', 'wind', 'renewable', 'energy', 'hydrogen', 'battery', 'electric', 'geothermal', 'turbine', 'clean power'],
+  emissions:    ['carbon', 'emission', 'climate', 'methane', 'fossil', 'coal', 'greenhouse', 'co2', 'net zero'],
+  biodiversity: ['species', 'forest', 'wildlife', 'biodiversity', 'coral', 'reef', 'extinction', 'habitat', 'conservation', 'ecosystem'],
+  water:        ['water', 'flood', 'drought', 'ocean', 'river', 'sea level', 'glacier', 'aquifer', 'rainfall'],
+  policy:       ['climate policy', 'cop', 'carbon tax', 'paris agreement', 'net zero', 'regulation', 'environmental law'],
+};
 
 const app       = express();
 const DATA_DIR  = path.join(__dirname, '..', 'data');
@@ -38,17 +47,46 @@ app.post('/api/analyze', async (req, res) => {
   // 1. Fetch articles from GDELT
   const articles = await getArticles(theme, region, timeWindow);
 
-  // 2. Build chart data
-  const chartData = buildChartData(articles, timeWindow);
+  // 2. DeBERTa re-ranker — filter to on-theme articles before summary
+  let filteredArticles = articles;
+  const debertaResults = await classifyWithDeBERTa(articles).catch(() => null);
 
-  // 3. GPT summary
+  let debertaKept = null;
+  if (debertaResults && debertaResults.length === articles.length) {
+    // Pass if: (DeBERTa label matches theme AND score >= 0.5) OR title has a must-have keyword
+    const mustHave = MUST_HAVE_KEYWORDS[theme] || [];
+    const onTheme  = articles.filter((a, i) => {
+      const { label, score } = debertaResults[i];
+      const titleText     = (a.title || '').toLowerCase();
+      const debertaPass   = label === theme && score >= 0.55;
+      const keywordPass   = mustHave.some(kw => titleText.includes(kw));
+      return debertaPass || keywordPass;
+    });
+    filteredArticles = onTheme.length >= 3 ? onTheme : articles;
+    const avgConf = debertaResults
+      .filter((_, i) => filteredArticles.includes(articles[i]))
+      .reduce((s, r) => s + r.score, 0) / (filteredArticles.length || 1);
+    debertaKept = {
+      kept:    filteredArticles.length,
+      total:   articles.length,
+      avgConf: +avgConf.toFixed(3),
+    };
+    console.log(`[DeBERTa] re-rank: ${articles.length} → ${filteredArticles.length} articles (theme="${theme}", avgConf=${debertaKept.avgConf})`);
+  } else {
+    console.log('[DeBERTa] re-rank skipped (unavailable), using all articles');
+  }
+
+  // 3. Build chart data from filtered set
+  const chartData = buildChartData(filteredArticles, timeWindow);
+
+  // 4. GPT summary over filtered articles
   let summary      = '';
   let sentimentArr = chartData.labels.map(() => 3.0);
 
-  if (process.env.OPENAI_API_KEY && articles.length > 0) {
+  if (process.env.OPENAI_API_KEY && filteredArticles.length > 0) {
     try {
       const openai  = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-      const snippet = articles.slice(0, 15).map((a, i) =>
+      const snippet = filteredArticles.slice(0, 15).map((a, i) =>
         `${i + 1}. "${a.title}"${a.snippet ? ' — ' + a.snippet.substring(0, 100) : ''} [${a.source}]`
       ).join('\n');
 
@@ -74,22 +112,32 @@ app.post('/api/analyze', async (req, res) => {
     }
   }
 
-  // 4. Live keyword precision
-  const kwPreds       = articles.map(a => classifyKeyword(a.title, a.snippet));
-  const keywordPrec   = articles.length > 0
-    ? +(kwPreds.filter(p => p === theme).length / articles.length).toFixed(3)
+  // 5. Live keyword precision on filtered set
+  const kwPreds     = filteredArticles.map(a => classifyKeyword(a.title, a.snippet));
+  const keywordPrec = filteredArticles.length > 0
+    ? +(kwPreds.filter(p => p === theme).length / filteredArticles.length).toFixed(3)
     : 0;
 
   const evalReady = fs.existsSync(EVAL_PATH);
 
-  // Annotate articles with category
-  const articlesOut = articles.map((a, i) => ({ ...a, category: kwPreds[i] }));
+  // Annotate each article with keyword category, DeBERTa label, and confidence
+  const articlesOut = filteredArticles.map((a, i) => {
+    const origIdx = articles.indexOf(a);
+    const dr      = debertaResults && origIdx !== -1 ? debertaResults[origIdx] : null;
+    return {
+      ...a,
+      category:     kwPreds[i],
+      debertaLabel: dr ? dr.label : null,
+      confidence:   dr ? dr.score : null,
+    };
+  });
 
   res.json({
     articles:         articlesOut,
     summary,
     chartData:        { labels: chartData.labels, values: chartData.values, sentiment: sentimentArr },
     keywordPrecision: keywordPrec,
+    debertaKept,
     evalReady,
   });
 
