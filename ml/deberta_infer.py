@@ -55,7 +55,7 @@ def main():
                 'score': round(best[1], 3),
             })
 
-        # Print ONLY the JSON array to stdout — nothing else
+        # Print ONLY the JSON array to stdout : nothing else
         print(json.dumps(results), flush=True)
 
     except Exception as e:

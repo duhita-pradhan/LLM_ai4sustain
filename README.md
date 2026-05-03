@@ -1,4 +1,4 @@
-# AI4Sustain — Environmental Insight & Trend Analysis
+# AI4Sustain : Environmental Insight & Trend Analysis
 
 LLM Course Final Project · TeamX · Spring 2026
 

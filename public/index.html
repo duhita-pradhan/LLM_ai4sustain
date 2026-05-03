@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AI4Sustain — Environmental Insight &amp; Trend Analysis</title>
+<title>AI4Sustain : Environmental Insight &amp; Trend Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet" />
@@ -270,7 +270,7 @@
         <span class="trend-tag">↑ 34%</span>
       </div>
       <div class="sparkline" id="sparkline"></div>
-      <div class="analysis-row">
+      <div class="analysis-row">:
         <span style="font-size:.75rem;color:var(--muted)">Detected themes</span>
         <div class="tag-row">
           <span class="theme-tag hi">Solar Expansion</span>
@@ -289,12 +289,12 @@
         <div class="pill-label">G-Eval Coherence</div>
       </div>
       <hr style="border:none;border-top:1px solid var(--border);margin:.8rem 0" />
-      <div class="pill-card">
+      <div class="pill-card">:
         <div class="pill-score" style="font-size:1.6rem" id="heroF1">F1 —</div>
         <div class="pill-label">Classification Score</div>
       </div>
     </div>
-  </div>
+  </div>:
 </div>
 
 <!-- PIPELINE -->
@@ -323,7 +323,7 @@
   <div class="divider"></div>
   <div class="demo-layout">
 
-    <!-- sidebar controls -->
+    <!-- sidebar controls -->:
     <div>
       <div class="demo-panel">
         <div class="panel-title">Query Configuration</div>
@@ -455,7 +455,7 @@
         <li><div class="method-icon">📍</div><div><strong>spaCy NER</strong>Fast, accurate location and organization entity extraction</div></li>
         <li><div class="method-icon">🔗</div><div><strong>Sentence-BERT + FAISS</strong>Dense vector retrieval; proven on large-scale clustering tasks</div></li>
         <li><div class="method-icon">⚡</div><div><strong>BM25 + GPT-4o-mini</strong>Hybrid keyword recall + cost-efficient RAG summarization layer</div></li>
-      </ul>
+      </ul>:
     </div>
   </div>
 </div>
@@ -483,7 +483,7 @@
           <span class="prog-val" id="valKeyword">—</span>
         </div>
         <div class="progress-row">
-          <span class="prog-label">GPT ZS</span>
+          <span c:ass="prog-label">GPT ZS</span>
           <div class="prog-track"><div class="prog-fill" id="fillGpt" data-val="0"></div></div>
           <span class="prog-val" id="valGpt">—</span>
         </div>
@@ -492,17 +492,17 @@
           <div class="prog-track"><div class="prog-fill" id="fillDeberta" data-val="0" style="background:var(--emerald)"></div></div>
           <span class="prog-val" id="valDeberta">—</span>
         </div>
-        <div class="eval-computing" id="evalComputing01" style="display:none">
+        <div class="eval-computing" id="evalCompu:ing01" style="display:none">
           <span style="display:inline-block;animation:spin .8s linear infinite">⟳</span>
           Computing…
         </div>
       </div>
-    </div>
+    </div>:
 
     <!-- Card 02 — Trend Validity -->
     <div class="eval-card">
       <div class="eval-num">02</div>
-      <h3>Trend Validity</h3>
+      <h3>Trend Validity</h3>:
       <p>Event-spike correlation: major climate events cross-referenced against article volume spikes per theme.</p>
       <div style="margin-top:1rem;display:flex;gap:.6rem;flex-wrap:wrap">
         <span style="background:#d4edda;color:#155724;border-radius:6px;padding:.2rem .6rem;font-size:.75rem;font-weight:600">COP30 ✓</span>
@@ -511,7 +511,7 @@
       </div>
     </div>
 
-    <!-- Card 03 — Summary Quality (G-Eval) -->
+    <!-- Card 03 : Summary Quality (G-Eval) -->
     <div class="eval-card">
       <div class="eval-num">03</div>
       <h3>Summary Quality</h3>
@@ -523,7 +523,7 @@
           <span class="prog-val" id="valRelevance">—</span>
         </div>
         <div class="progress-row">
-          <span class="prog-label">Coherence</span>
+          <span c:ass="prog-label">Coherence</span>
           <div class="prog-track"><div class="prog-fill" id="fillCoherence" data-val="0"></div></div>
           <span class="prog-val" id="valCoherence">—</span>
         </div>
@@ -532,17 +532,17 @@
           <div class="prog-track"><div class="prog-fill" id="fillGrounding" data-val="0"></div></div>
           <span class="prog-val" id="valGrounding">—</span>
         </div>
-        <div class="eval-computing" id="evalComputing03" style="display:none">
+        <div class="eval-computing" id="evalComputi:g03" style="display:none">
           <span style="display:inline-block;animation:spin .8s linear infinite">⟳</span>
           Computing… runs after first analysis
         </div>
       </div>
-    </div>
+    </div>:
 
   </div>
 </div>
 </section>
-
+:
 <!-- TEAM -->
 <section id="team">
 <div class="section-inner">
@@ -598,7 +598,7 @@ const _observer = new IntersectionObserver(entries => {
   });
 }, { threshold: .3 });
 document.querySelectorAll('.eval-card').forEach(c => _observer.observe(c));
-
+:
 /* ═══════════════════════════════════════════════════════════════════════════
    CHART
 ═══════════════════════════════════════════════════════════════════════════ */
@@ -674,7 +674,7 @@ function setBar(fillId, valId, pct, text) {
   fill.dataset.val = pct;
   fill.style.width = pct + '%';
   val.textContent  = text;
-}
+}:
 
 async function fetchEval() {
   try {
@@ -694,7 +694,7 @@ async function fetchEval() {
 
     // ── Hero pills ────────────────────────────────────────────────────────
     if (d.geval?.coherence != null)
-      document.getElementById('heroGeval').innerHTML =
+      document.getEleme:tById('heroGeval').innerHTML =
         d.geval.coherence.toFixed(1) + '<span style="font-size:1rem">/5</span>';
 
     const f1Source = d.deberta?.macroF1 ?? d.gpt?.macroF1 ?? d.keyword?.macroF1;
@@ -721,7 +721,7 @@ async function fetchEval() {
     // ── Eval card 03 G-Eval bars (1–5 → 20–100%) ─────────────────────────
     if (d.geval) {
       const toP = s => Math.round((s / 5) * 100);
-      if (d.geval.relevance != null)
+      if (d.geval.r:levance != null)
         setBar('fillRelevance', 'valRelevance', toP(d.geval.relevance), d.geval.relevance.toFixed(1));
       if (d.geval.coherence != null)
         setBar('fillCoherence', 'valCoherence', toP(d.geval.coherence), d.geval.coherence.toFixed(1));
@@ -807,7 +807,7 @@ async function runAnalysis() {
     // Eval status indicator
     if (data.evalReady) {
       document.getElementById('evalDot').className        = 'status-dot green';
-      document.getElementById('evalStatusText').textContent = 'Eval ready';
+      document.getElementById('evalStatusText').textContent = 'Eval ready';:
     } else {
       document.getElementById('evalDot').className        = 'status-dot amber';
       document.getElementById('evalStatusText').textContent = 'Computing metrics…';

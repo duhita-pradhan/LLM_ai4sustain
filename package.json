@@ -1,7 +1,7 @@
 {
   "name": "ai4sustain",
   "version": "1.0.0",
-  "description": "AI-powered sustainability news analysis — LLM Spring 2026",
+  "description": "AI-powered sustainability news analysis : LLM Spring 2026",
   "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js",
