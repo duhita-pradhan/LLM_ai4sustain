@@ -25,28 +25,40 @@ function keywordClassifyAll(articles) {
 }
 
 async function gptClassifyBatch(articles, openai) {
-  const numbered = articles
-    .map((a, i) => `${i + 1}. Title: ${a.title}\n   Snippet: ${(a.snippet || '').substring(0, 120)}`)
-    .join('\n');
-
   const c = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [{ role: 'user', content:
-      `Classify each article into exactly one category: renewable, emissions, biodiversity, water, policy\n\n` +
-      `Return ONLY a JSON array of category strings in the same order as the articles. No explanation, no markdown.\n\n` +
-      `Articles:\n${numbered}`
+      `Classify EXACTLY ${articles.length} articles.\n` +
+      `Return EXACTLY ${articles.length} strings in a JSON array.\n` +
+      `Categories: renewable, emissions, biodiversity, water, policy\n\n` +
+      articles.map((a, i) => `[${i}] ${a.title}`).join('\n') +
+      `\n\nReturn only the JSON array, example: ["renewable","policy","water"]`
     }],
     max_tokens: 300,
     temperature: 0,
   });
 
-  const raw   = c.choices[0].message.content.trim();
+  const raw = c.choices[0].message.content.trim();
   const clean = raw.replace(/```(?:json)?/g, '').replace(/```/g, '').trim();
-  const preds = JSON.parse(clean);
-  if (!Array.isArray(preds) || preds.length !== articles.length) {
-    throw new Error(`GPT returned ${preds.length} preds for ${articles.length} articles`);
+
+  let preds;
+  try {
+    preds = JSON.parse(clean);
+  } catch (e) {
+    console.warn('[Classifier] JSON parse failed, using keyword fallback');
+    return articles.map(a => classifyKeyword(a.title, a.snippet));
   }
-  return preds.map(p => CATEGORIES.includes(p) ? p : classifyKeyword('', ''));
+
+  if (!Array.isArray(preds)) {
+    return articles.map(a => classifyKeyword(a.title, a.snippet));
+  }
+
+  const result = [];
+  for (let i = 0; i < articles.length; i++) {
+    const p = preds[i];
+    result.push(CATEGORIES.includes(p) ? p : classifyKeyword(articles[i].title, articles[i].snippet));
+  }
+  return result;
 }
 
 async function gptClassifyAll(articles) {
@@ -70,8 +82,8 @@ async function gptClassifyAll(articles) {
 }
 
 function computeMetrics(gold, pred) {
-  const total   = gold.length;
-  const correct = gold.filter((g, i) => g === pred[i]).length;
+  const total    = gold.length;
+  const correct  = gold.filter((g, i) => g === pred[i]).length;
   const perClass = {};
 
   for (const cat of CATEGORIES) {
