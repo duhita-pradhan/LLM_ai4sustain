@@ -3,6 +3,7 @@ const fs   = require('fs');
 const path = require('path');
 
 const { keywordClassifyAll, gptClassifyAll, computeMetrics } = require('./classifier');
+const { classifyWithDeBERTa }                                = require('./deberta');
 const { gEval }                                              = require('./geval');
 
 const DATA_DIR   = path.join(__dirname, '..', 'data');
@@ -40,8 +41,26 @@ async function runEvaluation() {
     console.warn('[Eval] GPT zero-shot skipped — no OPENAI_API_KEY');
   }
 
-  // ── 3. DeBERTa — skipped on Node-only deployment ─────────────────────────
-  const debertaMetrics = null;
+  // ── 3. DeBERTa ───────────────────────────────────────────────────────────
+  let debertaMetrics = null;
+  console.log('[DeBERTa] Starting classification...');
+  const debertaPreds = await classifyWithDeBERTa(labeled);
+  console.log('[DeBERTa] Result:', debertaPreds === null ? 'returned null' : `${debertaPreds.length} predictions`);
+  if (debertaPreds && debertaPreds.length === labeled.length) {
+    const DEBERTA_LABEL_MAP = {
+      'renewable energy': 'renewable',
+      'carbon emissions': 'emissions',
+      'biodiversity':     'biodiversity',
+      'water resources':  'water',
+      'climate policy':   'policy',
+    };
+    const mappedPreds = debertaPreds.map(p => {
+      const raw = (p.label || p || '').toLowerCase();
+      return DEBERTA_LABEL_MAP[raw] || raw;
+    });
+    debertaMetrics = computeMetrics(gold, mappedPreds);
+    console.log(`[Eval] DeBERTa done. Macro F1: ${debertaMetrics.macroF1}`);
+  }
 
   // ── 4. G-Eval on 5-article sample ────────────────────────────────────────
   let gevalScores = { relevance: null, coherence: null, grounding: null };
