@@ -113,11 +113,7 @@
   .filter-label { font-size: .8rem; font-weight: 600; color: var(--ink); margin-bottom: .5rem; display: block; }
   select, input[type="text"] { width: 100%; background: var(--cream); color: var(--ink); border: 1px solid var(--border); border-radius: 8px; padding: .55rem .8rem; font-size: .88rem; font-family: 'DM Sans', sans-serif; appearance: none; outline: none; transition: border-color .2s; }
   select:focus, input[type="text"]:focus { border-color: var(--sage); }
-  .search-box { display: flex; gap: .5rem; margin-bottom: 1.2rem; }
-  .search-box input { flex: 1; }
-  .search-btn { background: var(--emerald); color: #fff; border: none; border-radius: 8px; padding: 0 1rem; cursor: pointer; font-size: .9rem; transition: background .2s; }
-  .search-btn:hover { background: var(--forest); }
-  .run-btn { width: 100%; background: var(--emerald); color: #fff; border: none; border-radius: 10px; padding: .75rem; font-size: .95rem; font-weight: 600; cursor: pointer; transition: all .2s; margin-top: .5rem; display: flex; align-items: center; justify-content: center; gap: .5rem; }
+.run-btn { width: 100%; background: var(--emerald); color: #fff; border: none; border-radius: 10px; padding: .75rem; font-size: .95rem; font-weight: 600; cursor: pointer; transition: all .2s; margin-top: .5rem; display: flex; align-items: center; justify-content: center; gap: .5rem; }
   .run-btn:hover { background: var(--forest); }
   .run-btn:disabled { opacity: .5; cursor: not-allowed; }
 
@@ -362,14 +358,6 @@
             <option value="90d">Last 90 days</option>
             <option value="1y">Last year</option>
           </select>
-        </div>
-
-        <div class="filter-group">
-          <label class="filter-label">Natural Language Query (optional)</label>
-          <div class="search-box">
-            <input type="text" id="nlQuery" placeholder="e.g. solar investment trends..." />
-            <button class="search-btn">→</button>
-          </div>
         </div>
 
         <button class="run-btn" id="runBtn" onclick="runAnalysis()">
@@ -780,7 +768,6 @@ async function runAnalysis() {
   const theme  = document.getElementById('themeSelect').value;
   const region = document.getElementById('regionSelect').value;
   const tw     = document.getElementById('timeSelect').value;
-  const nlq    = document.getElementById('nlQuery').value;
 
   btn.disabled = true;
   btn.innerHTML = '<span style="display:inline-block;animation:spin .8s linear infinite">⟳</span> Analyzing…';
@@ -801,7 +788,7 @@ async function runAnalysis() {
     const resp = await fetch('/api/analyze', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ theme, region, timeWindow: tw, nlQuery: nlq }),
+      body:    JSON.stringify({ theme, region, timeWindow: tw }),
     });
     if (!resp.ok) throw new Error(`Server ${resp.status}`);
     const data = await resp.json();
@@ -838,6 +825,7 @@ async function runAnalysis() {
         </div>
         <div class="result-title">AI-Generated Trend Summary</div>
         <div class="result-summary" id="summaryText" style="color:var(--ink)"></div>
+        ${data.debertaKept ? `<div style="margin-top:.7rem;font-size:.75rem;color:var(--muted)">🤖 DeBERTa filtered: ${data.debertaKept.kept}/${data.debertaKept.total} articles (avg confidence: ${data.debertaKept.avgConf.toFixed(2)})</div>` : ''}
       </div>`;
     }
 
@@ -852,7 +840,8 @@ async function runAnalysis() {
         html += `<div class="result-card" style="animation-delay:${(i + 1) * .08}s">
           <div class="result-meta">
             <span class="meta-chip ${SENT_COLOR(a.sentiment)}">${esc(a.sentiment || 'Neutral')}</span>
-            <span class="meta-chip">${esc(a.category || theme)}</span>
+            <span class="meta-chip ${a.debertaLabel && a.debertaLabel !== theme ? 'amber' : ''}">${esc(a.debertaLabel || a.category || theme)}</span>
+            ${a.debertaLabel ? `<span class="meta-chip blue">DeBERTa${a.confidence != null ? ' ' + a.confidence.toFixed(2) : ''}</span>` : ''}
             <span class="meta-chip">${a.from === 'newsapi' ? 'NewsAPI' : a.from === 'fallback' ? 'Fallback' : 'GDELT'}</span>
           </div>
           <div class="result-title">${esc(a.title)}</div>
